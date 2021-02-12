@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "module": "AMD",
+    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    "removeComments": false,
+    "preserveConstEnums": true,
+    "inlineSourceMap": true,
+    "target": "ES5",
+    "declaration": false,
+    "lib": [
+      "es2017",
+      "dom"
+    ]
+  },
+  "typeRoots": [
+  ],
+  "include": [
+    "src/**/*.ts"
+  ]
+}

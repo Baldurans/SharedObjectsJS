@@ -1,0 +1,20 @@
+{
+  "name": "js_shared_objects",
+  "version": "7.21.11",
+  "description": "Sharing objects using SharedArrayBuffer in WebWorkers.",
+  "license": "MIT",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "typescript": "3.9.5"
+  },
+  "resolutions": {},
+  "scripts": {
+    "compile": "tsc --build",
+    "compile:watch": "tsc --build --watch ./"
+  },
+  "engines": {
+    "node": ">= 8.10.0",
+    "yarn": ">= 1.21.1"
+  }
+}

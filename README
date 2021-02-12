@@ -1,0 +1,28 @@
+Share objects in WebWorkers using SharedArrayBuffer
+
+// in your main process
+const arr1 = new MyArray();
+arr1.add(new MyObject(1, 2));
+arr1.add(new MyObject(5, 6));
+arr1.add(new MyObject(7, 8));
+arr1.set(4, new MyObject(9, 10));
+
+// in web worker
+const arr2 = new MyArray(arr1.getBuffer());
+arr.forEach(( item ) => {
+
+});
+
+
+WEAKNESSES
+* No atomic action protection. My use case assumed webWorkers only need to read, so didn't focus on this.
+* A lot smaller limitations on how objects are handled. All of them were fine for my use case, but more advanced solution can be built.
+
+
+CONCLUSION
+Do what ever you want with it.
+
+Thought it might be useful for someone to develop on top of this idea to make SharedArrayBuffer easier to use for a bit more complex cases than just sharing list of numbers.
+I also did not find any library that would do something similar that would work in latest browsers.
+
+Unfortunately I didn't have time to focus on this too much to make it a proper library... :(
