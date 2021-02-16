@@ -64,5 +64,8 @@ That file contains code that developer would need to write to set it up.
 ## Warnings
 It uses SharedArrayBuffer and Atomics. Make sure your target browsers support those!
 
+## Tests
+I was too lazy to do it properly, worked for my case :)
+
 ## CONCLUSION
 Do what ever you want with it. If you found it useful, let me know :)
