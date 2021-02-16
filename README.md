@@ -1,5 +1,8 @@
-Share objects in WebWorkers using SharedArrayBuffer
+# Share objects in WebWorkers using SharedArrayBuffer
 
+
+## Example
+```
 // setting up your structure
 class MyArray extends SharedObjectArray<Uint32Array, MyObject> {
     constructor(buffer?: SharedArrayBuffer) {
@@ -43,14 +46,14 @@ const arr2 = new MyArray(arr1.getBuffer());
 arr.forEach(( item ) => {
 
 });
+```
 
-
-WEAKNESSES
+## WEAKNESSES
 * No atomic action protection. My use case assumed webWorkers only need to read, so didn't focus on this.
 * A lot smaller limitations on how objects are handled. All of them were fine for my use case, but more advanced solution can be built.
 
 
-CONCLUSION
+## CONCLUSION
 Do what ever you want with it.
 
 Thought it might be useful for someone to develop on top of this idea to make SharedArrayBuffer easier to use for a bit more complex cases than just sharing list of numbers.
