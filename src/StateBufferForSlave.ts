@@ -30,6 +30,7 @@ export class StateBufferForSlave<T> extends StateBuffer {
         }
 
         this.lock();
+
         const noOfChanges = this.controlBuffer[StateBufferForSlave.NO_OF_DIRTY_OBJECTS_INDEX];
         for (let i = 0; i < noOfChanges; i++) {
             const index = this.changesBuffer[i];
