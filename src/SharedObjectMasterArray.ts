@@ -44,7 +44,11 @@ export abstract class SharedObjectMasterArray<T extends object> {
         return this.stateBuffer.export();
     }
 
-    public getObjects(): Array<T | undefined> {
-        return this.stateBuffer.getObjects();
+    public getArray(): Array<T | undefined> {
+        return this.stateBuffer.getArray();
+    }
+
+    public get(index: number): T | undefined {
+        return this.stateBuffer.get(index);
     }
 }

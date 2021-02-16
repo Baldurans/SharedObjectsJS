@@ -56,34 +56,34 @@ export class SyncTest {
         main.addDirtyObject(obj1);
         main.addDirtyObject(obj2);
 
-        compareState(main.getObjects(), [null, null, null, null, null]);
+        compareState(main.getArray(), [null, null, null, null, null]);
         sync();
-        compareState(main.getObjects(), [obj1, obj2, null, null, null]);
-        compareState(slave.getAllObjects(), [obj1, obj2, null, null, null]);
+        compareState(main.getArray(), [obj1, obj2, null, null, null]);
+        compareState(slave.getArray(), [obj1, obj2, null, null, null]);
 
 
         main.addDirtyObject(obj3);
         main.addDeletedObject(obj1);
         sync();
-        compareState(main.getObjects(), [null, obj2, obj3, null, null]);
-        compareState(slave.getAllObjects(), [null, obj2, obj3, null, null]);
+        compareState(main.getArray(), [null, obj2, obj3, null, null]);
+        compareState(slave.getArray(), [null, obj2, obj3, null, null]);
 
         main.addDirtyObject(obj4);
         sync();
-        compareState(main.getObjects(), [obj4, obj2, obj3, null, null]);
-        compareState(slave.getAllObjects(), [obj4, obj2, obj3, null, null]);
+        compareState(main.getArray(), [obj4, obj2, obj3, null, null]);
+        compareState(slave.getArray(), [obj4, obj2, obj3, null, null]);
 
         expectThrow(() => {
             main.replaceObjectAtIndex(3, obj4);
         })
         sync();
-        compareState(main.getObjects(), [obj4, obj2, obj3, null, null]);
-        compareState(slave.getAllObjects(), [obj4, obj2, obj3, null, null]);
+        compareState(main.getArray(), [obj4, obj2, obj3, null, null]);
+        compareState(slave.getArray(), [obj4, obj2, obj3, null, null]);
 
         main.replaceObjectAtIndex(4, obj5);
         sync();
-        compareState(main.getObjects(), [obj4, obj2, obj3, null, obj5]);
-        compareState(slave.getAllObjects(), [obj4, obj2, obj3, null, obj5]);
+        compareState(main.getArray(), [obj4, obj2, obj3, null, obj5]);
+        compareState(slave.getArray(), [obj4, obj2, obj3, null, obj5]);
 
 
         main.addDeletedObject(obj4);
@@ -91,8 +91,8 @@ export class SyncTest {
         main.addDeletedObject(obj3);
         main.addDeletedObject(obj5);
         sync();
-        compareState(main.getObjects(), [null, null, null, null, null]);
-        compareState(slave.getAllObjects(), [null, null, null, null, null]);
+        compareState(main.getArray(), [null, null, null, null, null]);
+        compareState(slave.getArray(), [null, null, null, null, null]);
     }
 
     public static power() {
@@ -103,7 +103,7 @@ export class SyncTest {
         const main = new ExampleMasterObjectArray(MAX);
         for (let i = 0; i < MAX; i++) {
             const obj: MasterObject = {
-                metaId: Math.round(Math.random() * 250),
+                metaId: Math.round(Math.random() * 250) + 1,
                 x: Math.round(Math.random() * 250),
                 y: Math.round(Math.random() * 250),
                 sx: Math.round(Math.random() * 30000),
@@ -138,7 +138,7 @@ export class SyncTest {
         console.log("A7: " + (performance.now() - start7) + " (empty read from slave)");
 
         const start8 = performance.now();
-        const objects = main.getObjects();
+        const objects = main.getArray();
         for (let i = 0; i < UPDATE; i++) {
             objects[i].x = 10;
             main.addDirtyObject(objects[i]);

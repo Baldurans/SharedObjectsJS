@@ -77,7 +77,7 @@ export class Test {
         }
 
         setTimeout(() => {
-            const finalState = slave.getAllObjects();
+            const finalState = slave.getArray();
 
             compare(finalState[0], null);
             compare(finalState[1], obj2);

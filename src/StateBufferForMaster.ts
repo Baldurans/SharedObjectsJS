@@ -133,8 +133,12 @@ export class StateBufferForMaster<T extends object> extends StateBuffer {
         this.deleted.add(object);
     }
 
-    public getObjects(): Array<T | undefined> {
+    public getArray(): Array<T | undefined> {
         return this.indexToObject;
+    }
+
+    public get(index: number): T | undefined {
+        return this.indexToObject[index];
     }
 
     public export(): StateBufferExport {
