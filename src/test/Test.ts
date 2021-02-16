@@ -64,7 +64,7 @@ export class Test {
     public static slave(buffers: ExampleBuffersExport) {
         const slave = new ExampleSlaveObjectArray(buffers).init();
         const func = () => {
-            const changes = slave.populateObjects();
+            const changes = slave.sync();
             if (changes.deleted.length > 0) {
                 console.log("Slave Deleted " + changes.deleted.length, JSON.stringify(changes.deleted));
                 console.log(slave);

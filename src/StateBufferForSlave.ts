@@ -23,7 +23,7 @@ export class StateBufferForSlave<T> extends StateBuffer {
         this.releaseLock();
     }
 
-    public populateObjectsAndGetChanges(): StateBufferForSlaveChanges<T> {
+    public sync(): StateBufferForSlaveChanges<T> {
         const changes: StateBufferForSlaveChanges<T> = {
             deleted: [],
             updated: []

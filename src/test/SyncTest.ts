@@ -42,7 +42,7 @@ export class SyncTest {
 
         function sync() {
             main.flushToMemorySync();
-            slave.populateObjects();
+            slave.sync();
         }
 
         function compareState(objects: any[], match: any[]) {
@@ -96,8 +96,8 @@ export class SyncTest {
     }
 
     public static power() {
-        const MAX = 500000;
-        const UPDATE = 100000;
+        const MAX = 100000;
+        const UPDATE = MAX / 2;
         console.log("Testing with " + MAX + " objects");
         const start = performance.now();
         const main = new ExampleMasterObjectArray(MAX);
@@ -122,7 +122,7 @@ export class SyncTest {
         console.log("A3: " + (performance.now() - start3) + " (start slave)");
 
         const start4 = performance.now();
-        slave.populateObjects();
+        slave.sync();
         console.log("A4: " + (performance.now() - start4) + " (populate slave)");
 
         const start5 = performance.now();
@@ -130,11 +130,11 @@ export class SyncTest {
         console.log("A5: " + (performance.now() - start5) + " (empty flush from main)");
 
         const start6 = performance.now();
-        slave.populateObjects();
+        slave.sync();
         console.log("A6: " + (performance.now() - start6) + " (empty read from slave)");
 
         const start7 = performance.now();
-        slave.populateObjects();
+        slave.sync();
         console.log("A7: " + (performance.now() - start7) + " (empty read from slave)");
 
         const start8 = performance.now();
@@ -153,11 +153,11 @@ export class SyncTest {
         console.log("A9: " + (performance.now() - start9) + " (sync to memory)");
 
         const start10 = performance.now();
-        const res = slave.populateObjects();
+        const res = slave.sync();
         console.log("A10: " + (performance.now() - start10) + " (read from slave - updated: " + res.updated.length + " deleted: " + res.deleted.length + ")");
 
         const start11 = performance.now();
-        const res2 = slave.populateObjects();
+        const res2 = slave.sync();
         console.log("A11: " + (performance.now() - start11) + " (read from slave - updated: " + res2.updated.length + " deleted: " + res2.deleted.length + ")");
 
     }
