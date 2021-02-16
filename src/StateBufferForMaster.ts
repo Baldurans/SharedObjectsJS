@@ -1,4 +1,4 @@
-import {StateBuffer, StateBufferExport} from "./StateBuffer";
+import {StateBuffer} from "./StateBuffer";
 
 export interface StateBufferForMasterListeners<T> {
     populateMemory: (index: number, obj: T) => void;
@@ -148,4 +148,10 @@ export class StateBufferForMaster<T extends object> extends StateBuffer {
             isDirtyBuffer: this.isDirtyBuffer.buffer as SharedArrayBuffer
         }
     }
+}
+
+export interface StateBufferExport {
+    controlBuffer: SharedArrayBuffer;
+    changesBuffer: SharedArrayBuffer;
+    isDirtyBuffer: SharedArrayBuffer;
 }

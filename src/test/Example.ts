@@ -1,6 +1,6 @@
 import {SharedObjectMasterArray} from "../SharedObjectMasterArray";
-import {StateBufferExport} from "../StateBuffer";
 import {SharedObjectSlaveArray} from "../SharedObjectSlaveArray";
+import {StateBufferExport} from "../StateBufferForMaster";
 
 export class ExampleMasterObjectArray extends SharedObjectMasterArray<MasterObject> {
 

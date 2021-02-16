@@ -1,3 +1,5 @@
+import {StateBufferExport} from "./StateBufferForMaster";
+
 export abstract class StateBuffer {
 
     protected readonly controlBuffer: Int32Array;
@@ -57,8 +59,3 @@ export abstract class StateBuffer {
 
 }
 
-export interface StateBufferExport {
-    controlBuffer: SharedArrayBuffer;
-    changesBuffer: SharedArrayBuffer;
-    isDirtyBuffer: SharedArrayBuffer;
-}

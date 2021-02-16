@@ -1,4 +1,5 @@
-import {StateBuffer, StateBufferExport} from "./StateBuffer";
+import {StateBuffer} from "./StateBuffer";
+import {StateBufferExport} from "./StateBufferForMaster";
 
 export interface StateBufferForMasterListeners<T> {
     updateObject: (index: number, obj: T | null) => T | null;

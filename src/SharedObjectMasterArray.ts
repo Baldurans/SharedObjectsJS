@@ -1,5 +1,4 @@
-import {StateBufferForMaster} from "./StateBufferForMaster";
-import {StateBufferExport} from "./StateBuffer";
+import {StateBufferExport, StateBufferForMaster} from "./StateBufferForMaster";
 
 export abstract class SharedObjectMasterArray<T extends object> {
 

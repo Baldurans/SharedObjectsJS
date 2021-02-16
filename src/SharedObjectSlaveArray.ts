@@ -1,5 +1,5 @@
-import {StateBufferExport} from "./StateBuffer";
 import {StateBufferForSlave, StateBufferForSlaveChanges} from "./StateBufferForSlave";
+import {StateBufferExport} from "./StateBufferForMaster";
 
 export abstract class SharedObjectSlaveArray<T extends object> {
 
