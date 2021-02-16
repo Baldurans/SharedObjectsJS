@@ -23,4 +23,8 @@ export abstract class SharedObjectSlaveArray<T extends object> {
     public populateObjects(): StateBufferForSlaveChanges<T> {
         return this.stateBuffer.populateObjectsAndGetChanges();
     }
+
+    public getAllObjects(): Array<T | undefined> {
+        return this.stateBuffer.getAllObjects();
+    }
 }

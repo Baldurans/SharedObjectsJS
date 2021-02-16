@@ -2,6 +2,16 @@
 # yarn lockfile v1
 
 
+amd@^0.0.0:
+  version "0.0.0"
+  resolved "https://registry.yarnpkg.com/amd/-/amd-0.0.0.tgz#98983413d1f15ebbfb2ea72786b8d4fc60b5f611"
+  integrity sha1-mJg0E9HxXrv7LqcnhrjU/GC19hE=
+
+requirejs@^2.3.6:
+  version "2.3.6"
+  resolved "https://registry.yarnpkg.com/requirejs/-/requirejs-2.3.6.tgz#e5093d9601c2829251258c0b9445d4d19fa9e7c9"
+  integrity sha512-ipEzlWQe6RK3jkzikgCupiTbTvm4S0/CAU5GlgptkN5SO6F3u0UD0K18wy6ErDqiCyP4J4YYe1HuAShvsxePLg==
+
 typescript@3.9.5:
   version "3.9.5"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.9.5.tgz#586f0dba300cde8be52dd1ac4f7e1009c1b13f36"

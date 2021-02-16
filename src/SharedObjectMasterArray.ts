@@ -1,7 +1,7 @@
 import {StateBufferForMaster} from "./StateBufferForMaster";
 import {StateBufferExport} from "./StateBuffer";
 
-export abstract class SharedObjectArray<T extends object> {
+export abstract class SharedObjectMasterArray<T extends object> {
 
     private readonly stateBuffer: StateBufferForMaster<T>;
 
@@ -28,6 +28,10 @@ export abstract class SharedObjectArray<T extends object> {
         this.stateBuffer.flushToMemory();
     }
 
+    public flushToMemorySync() {
+        this.stateBuffer.flushToMemorySync();
+    }
+
     public addDirtyObject(obj: T) {
         this.stateBuffer.addDirtyObject(obj);
     }
@@ -38,5 +42,9 @@ export abstract class SharedObjectArray<T extends object> {
 
     public export(): StateBufferExport {
         return this.stateBuffer.export();
+    }
+
+    public getObjects(): Array<T | undefined> {
+        return this.stateBuffer.getObjects();
     }
 }

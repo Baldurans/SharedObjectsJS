@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "AMD",
+    "module": "amd",
     "moduleResolution": "node",
     "noImplicitAny": true,
     "noImplicitReturns": true,

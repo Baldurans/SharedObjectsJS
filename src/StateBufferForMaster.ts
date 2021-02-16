@@ -7,7 +7,8 @@ export interface StateBufferForMasterListeners<T> {
 
 export class StateBufferForMaster<T extends object> extends StateBuffer {
 
-    private readonly indexToObject: Map<number, T> = new Map();
+    private readonly maxObjects: number;
+    private readonly indexToObject: T[] = [];
     private readonly objectToIndex: Map<T, number> = new Map();
     private readonly dirty: Set<T> = new Set();
     private readonly deleted: Set<T> = new Set();
@@ -20,7 +21,14 @@ export class StateBufferForMaster<T extends object> extends StateBuffer {
 
     constructor(maxObjects: number, listeners: StateBufferForMasterListeners<T>) {
         super(maxObjects);
+        this.maxObjects = maxObjects;
         this.listeners = listeners;
+    }
+
+    public flushToMemorySync(): void {
+        this.lock();
+        this._flushToMemory();
+        this.releaseLock();
     }
 
     public flushToMemory(): void {
@@ -29,11 +37,15 @@ export class StateBufferForMaster<T extends object> extends StateBuffer {
         }
         this.isFlushing = true;
         this.executeLocked(() => {
-            this.handleDirty();
-            this.handleDeleted();
-            this.controlBuffer[StateBuffer.NO_OF_OBJECTS_INDEX] = this.noOfObjects;
+            this._flushToMemory();
             this.isFlushing = false;
         });
+    }
+
+    private _flushToMemory() {
+        this.handleDirty();
+        this.handleDeleted();
+        this.controlBuffer[StateBuffer.NO_OF_OBJECTS_INDEX] = this.noOfObjects;
     }
 
     private handleDirty() {
@@ -48,9 +60,13 @@ export class StateBufferForMaster<T extends object> extends StateBuffer {
                     index = this.unusedIndexes.pop();
                 } else {
                     index = this.noOfObjects;
+                    if (this.noOfObjects === this.maxObjects) {
+                        throw new Error("MAX objects reached!" + this.noOfObjects + "/" + this.maxObjects);
+                    }
                     this.noOfObjects++;
                 }
                 this.objectToIndex.set(obj, index);
+                this.indexToObject[index] = obj;
             }
 
             this.registerDirtyIndex(index);
@@ -65,7 +81,7 @@ export class StateBufferForMaster<T extends object> extends StateBuffer {
             let index = this.objectToIndex.get(obj);
             if (index !== undefined) {
                 this.objectToIndex.delete(obj);
-                this.indexToObject.delete(index);
+                this.indexToObject[index] = undefined;
                 this.unusedIndexes.push(index);
                 this.registerDirtyIndex(index);
                 this.listeners.deleteMemory(index, obj);
@@ -85,14 +101,26 @@ export class StateBufferForMaster<T extends object> extends StateBuffer {
     }
 
     public replaceObjectAtIndex(index: number, object: T) {
-        const existingObj = this.indexToObject.get(index);
+        if (this.objectToIndex.get(object) !== undefined) {
+            throw new Error("Object is already part of index. Create new object to add it again or wait until it is removed and synced to worker");
+        }
+
+        const existingObj = this.indexToObject[index];
+        if (existingObj === object) { // Already added to exact same spot.
+            return;
+        }
+
         if (existingObj) {
-            this.indexToObject.delete(index);
+            this.indexToObject[index] = undefined;
             this.objectToIndex.delete(existingObj);
             this.dirty.delete(existingObj);
             this.deleted.delete(existingObj);
         }
-        this.indexToObject.set(index, object);
+
+        if (index >= this.noOfObjects) {
+            this.noOfObjects = index + 1;
+        }
+        this.indexToObject[index] = object;
         this.objectToIndex.set(object, index);
         this.dirty.add(object);
     }
@@ -103,6 +131,10 @@ export class StateBufferForMaster<T extends object> extends StateBuffer {
 
     public addDeletedObject(object: T) {
         this.deleted.add(object);
+    }
+
+    public getObjects(): Array<T | undefined> {
+        return this.indexToObject;
     }
 
     public export(): StateBufferExport {

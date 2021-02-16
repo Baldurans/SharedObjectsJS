@@ -1,14 +1,13 @@
-import {SharedObjectArray} from "../SharedObjectArray";
+import {SharedObjectMasterArray} from "../SharedObjectMasterArray";
 import {StateBufferExport} from "../StateBuffer";
 import {SharedObjectSlaveArray} from "../SharedObjectSlaveArray";
 
-export class ExampleMasterObjectArray extends SharedObjectArray<MasterObject> {
+export class ExampleMasterObjectArray extends SharedObjectMasterArray<MasterObject> {
 
     private readonly main: Uint8Array;
     private readonly sec: Uint32Array;
 
-    public constructor() {
-        const maxObjects = 5;
+    public constructor( maxObjects: number ) {
         super(maxObjects);
         this.main = new Uint8Array(new SharedArrayBuffer(maxObjects * 3 * Uint8Array.BYTES_PER_ELEMENT));
         this.sec = new Uint32Array(new SharedArrayBuffer(maxObjects * 2 * Uint32Array.BYTES_PER_ELEMENT));
@@ -38,7 +37,7 @@ export class ExampleMasterObjectArray extends SharedObjectArray<MasterObject> {
         return {
             ...super.export(),
             main: this.main.buffer as SharedArrayBuffer,
-            sec: this.main.buffer as SharedArrayBuffer,
+            sec: this.sec.buffer as SharedArrayBuffer,
         }
     }
 }

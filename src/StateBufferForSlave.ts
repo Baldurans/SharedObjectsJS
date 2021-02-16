@@ -24,12 +24,12 @@ export class StateBufferForSlave<T> extends StateBuffer {
     }
 
     public populateObjectsAndGetChanges(): StateBufferForSlaveChanges<T> {
-        this.lock();
-
         const changes: StateBufferForSlaveChanges<T> = {
             deleted: [],
             updated: []
         }
+
+        this.lock();
         const noOfChanges = this.controlBuffer[StateBufferForSlave.NO_OF_DIRTY_OBJECTS_INDEX];
         for (let i = 0; i < noOfChanges; i++) {
             const index = this.changesBuffer[i];
@@ -51,6 +51,10 @@ export class StateBufferForSlave<T> extends StateBuffer {
         this.releaseLock();
 
         return changes;
+    }
+
+    public getAllObjects(): Array<T | undefined> {
+        return this.objects;
     }
 }
 
