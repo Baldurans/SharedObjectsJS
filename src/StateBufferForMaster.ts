@@ -87,7 +87,6 @@ export class StateBufferForMaster<T extends object> extends StateBuffer {
                 this.listeners.deleteMemory(index, obj);
             }
         });
-        this.dirty.clear();
         this.deleted.clear();
     }
 
@@ -123,6 +122,7 @@ export class StateBufferForMaster<T extends object> extends StateBuffer {
         this.indexToObject[index] = object;
         this.objectToIndex.set(object, index);
         this.dirty.add(object);
+        this.deleted.delete(object);
     }
 
     public addDirtyObject(object: T) {

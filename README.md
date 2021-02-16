@@ -46,6 +46,8 @@ const obj2 = {x: 3, y: 4};
 
 main.addDirtyObject(obj1);
 main.addDirtyObject(obj2);
+main.addDeletedObject(obj1);
+main.replaceObjectAtIndex(0, obj1);
 main.flushToMemory(); // Flushes contents to shared memory (while doing so memory is locked)
 
 
