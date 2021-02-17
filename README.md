@@ -69,5 +69,5 @@ It uses SharedArrayBuffer and Atomics. Make sure your target browsers support th
 ## Tests
 I was too lazy to do it properly, worked for my case :)
 
-## CONCLUSION
-Do what ever you want with it. If you found it useful, let me know :)
+## License
+MIT - Do what ever you want with it. If you found it useful, let me know :)
