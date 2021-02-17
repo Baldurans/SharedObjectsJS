@@ -4,7 +4,8 @@
   "description": "Master-slave solution for sharing objects using SharedArrayBuffer fast and safely for OffscreenCanvas.",
   "author": "Oliver Leisalu",
   "license": "MIT",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "dependencies": {
     "amd": "^0.0.0",
     "requirejs": "^2.3.6"

@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "amd",
+    "module": "commonjs",
     "moduleResolution": "node",
     "noImplicitAny": true,
     "noImplicitReturns": true,
@@ -11,11 +11,12 @@
     "preserveConstEnums": true,
     "inlineSourceMap": true,
     "target": "ES5",
-    "declaration": false,
+    "declaration": true,
     "lib": [
       "es2017",
       "dom"
-    ]
+    ],
+    "outDir": "./dist"
   },
   "typeRoots": [
   ],
