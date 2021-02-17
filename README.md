@@ -39,6 +39,7 @@ Its fast enough for ~30 fps with 100k objects that change every frame.
 ```
 // IN Main thread
 const main = new ExampleMasterObjectArray(5);
+main.initPeriodicFlush(60); // 60 is target FPS, uses setInterval
 worker.postMessage({buffers: main.export()});
 
 const obj1 = {x: 1, y: 2};
@@ -48,15 +49,16 @@ main.dirtyObject(obj1);
 main.dirtyObject(obj2);
 main.deleteObject(obj1);
 main.replaceObjectAt(0, obj1);
-main.flushToMemory(); // Flushes contents to shared memory (while doing so memory is locked)
-
 
 // IN Worker thread
 const slave = new ExampleSlaveObjectArray( buffersFromMain ).init();
-const changes = slave.sync(); // Creates local dataset from shared memory. (while doing so memory is locked).
-console.log(changes.deleted);
-console.log(changes.updated);
-
+const f = () => {
+    const changes = slave.sync(); // Creates local dataset from shared memory. (while doing so memory is locked).
+    console.log(changes.deleted);
+    console.log(changes.updated);
+    requestAnimationFrame(f);
+}
+f();
 ```
 
 ## Example
