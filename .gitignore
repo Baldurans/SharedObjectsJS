@@ -1,4 +1,5 @@
 
+dist
 src/**/*.js
 .idea
 node_modules
