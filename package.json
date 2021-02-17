@@ -6,11 +6,10 @@
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "dependencies": {
-    "amd": "^0.0.0",
-    "requirejs": "^2.3.6"
-  },
+  "dependencies": {},
   "devDependencies": {
+    "jest": "^26.6.3",
+    "ts-jest": "^26.5.1",
     "typescript": "3.9.5"
   },
   "repository": {
@@ -18,9 +17,8 @@
     "url": "git+https://github.com/Baldurans/SharedObjectsJS.git"
   },
   "scripts": {
-    "test": "test",
-    "compile": "tsc --build",
-    "compile:watch": "tsc --build --watch ./"
+    "test": "tsc --build ./test && jest",
+    "build": "tsc --build ./src/"
   },
   "engines": {
     "node": ">= 8.10.0",
@@ -39,5 +37,16 @@
     "WebWorker",
     "JS",
     "Javascript"
-  ]
+  ],
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "jsdom",
+    "rootDir": "test",
+    "testMatch": [
+      "**/?(*.)+(spec|test).ts?(x)"
+    ]
+  },
+  "jestxxxxxxxxx": {
+    "preset": "ts-jest"
+  }
 }

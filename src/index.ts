@@ -1,2 +1,2 @@
-export {SharedObjectMasterArray} from './lib/SharedObjectMasterArray';
-export {SharedObjectSlaveArray} from './lib/SharedObjectSlaveArray';
+export {SharedObjectMasterArray} from './SharedObjectMasterArray';
+export {SharedObjectSlaveArray} from './SharedObjectSlaveArray';

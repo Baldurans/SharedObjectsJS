@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
     "moduleResolution": "node",
     "noImplicitAny": true,
     "noImplicitReturns": true,
@@ -10,17 +9,12 @@
     "removeComments": false,
     "preserveConstEnums": true,
     "inlineSourceMap": true,
+    "esModuleInterop": true,
     "target": "ES5",
     "declaration": true,
     "lib": [
       "es2017",
       "dom"
-    ],
-    "outDir": "./dist"
-  },
-  "typeRoots": [
-  ],
-  "include": [
-    "src/**/*.ts"
-  ]
+    ]
+  }
 }

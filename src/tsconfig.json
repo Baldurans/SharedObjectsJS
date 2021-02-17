@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.defaults.json",
+  "compilerOptions": {
+    "module": "umd",
+    "outDir": "../dist"
+  },
+  "include": [
+    "./**/*.ts"
+  ]
+}
