@@ -23,6 +23,14 @@ export abstract class SharedObjectMasterArray<T extends object> {
         this.stateBuffer.replaceObjectAt(index, object);
     }
 
+    public initPeriodicFlush(fps?: number) {
+        this.stateBuffer.initPeriodicFlush(fps);
+    }
+
+    public clearPeriodicFlush() {
+        this.stateBuffer.clearPeriodicFlush();
+    }
+
     public flushToMemory() {
         this.stateBuffer.flushToMemory();
     }
