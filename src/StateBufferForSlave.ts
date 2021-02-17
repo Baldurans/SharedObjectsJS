@@ -46,7 +46,7 @@ export class StateBufferForSlave<T> extends StateBuffer {
             }
 
             this.objects[index] = updated;
-            this.isDirtyBuffer[index] = 0;
+            this.isDirtyBuffer[index] = StateBuffer.CLEAN;
             this.changesBuffer[i] = 0;
         }
         this.controlBuffer[StateBuffer.NO_OF_DIRTY_OBJECTS_INDEX] = 0;

@@ -2,17 +2,31 @@ import {StateBufferExport} from "./StateBufferForMaster";
 
 export abstract class StateBuffer {
 
+    /**
+     * [NO_OF_OBJECTS_INDEX, NO_OF_DIRTY_OBJECTS_INDEX, LOCK_INDEX]
+     */
     protected readonly controlBuffer: Int32Array;
+    /**
+     * Registers all changes. Each value is index of object that changed.
+     */
     protected readonly changesBuffer: Uint32Array;
+    /**
+     * Key is index for object that is dirty. Used for lookup if object is already marked dirty, so it would not be added to changeBuffer multiple times.
+     */
     protected readonly isDirtyBuffer: Uint8Array;
 
     private static CONTROL_BUFFER_LENGTH = 3;
+
+    // control buffer keys
     public static NO_OF_OBJECTS_INDEX = 0;
     public static NO_OF_DIRTY_OBJECTS_INDEX = 1;
     private static LOCK_INDEX = 2;
 
     private static UNLOCKED = 0;
     private static LOCKED = 1;
+
+    public static CLEAN = 0;
+    public static DIRTY = 1;
 
     protected constructor(buffersOrMaxObjects: number | StateBufferExport) {
         if (typeof buffersOrMaxObjects === "number") {

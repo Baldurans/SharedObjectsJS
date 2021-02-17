@@ -14,15 +14,31 @@ function compare(msg: string, a: any, b: any) {
     if (astr === bstr) {
         console.log(msg + ") " + astr + " === " + bstr);
     } else {
-        console.error(new Error(msg + ") " + astr + " === " + bstr));
+        throw new Error(msg + ") " + astr + " === " + bstr);
+    }
+}
+
+function comapreArray(msg: string, a: any[], b: any[]) {
+    const maxLen = Math.max(a.length, b.length);
+    for (let i = 0; i < maxLen; i++) {
+        try {
+            compare(msg + " [" + i + "] ", a[i], b[i]);
+        } catch (e) {
+            console.error(a, b);
+            throw e;
+        }
     }
 }
 
 function expectThrow(func: () => void) {
+    let did = false;
     try {
         func();
-        console.error(new Error("Expected to throw!"));
+        did = true;
     } catch (e) {
+        if (did) {
+            throw new Error("Expected to throw!")
+        }
         console.log("Nice, threw Exception!");
     }
 }
@@ -40,76 +56,127 @@ export class SyncTest {
         const main = new ExampleMasterObjectArray(5);
         const slave = new ExampleSlaveObjectArray(main.export()).init();
 
-        function sync() {
+        function sync(updated: any[], deleted: any[]) {
             main.flushToMemorySync();
-            slave.sync();
+            const res = slave.sync();
+            comapreArray("updated", res.updated, updated);
+            comapreArray("deleted", res.deleted, deleted);
         }
 
-        function compareState(objects: any[], match: any[]) {
-            compare("0", objects[0], match[0]);
-            compare("1", objects[1], match[1]);
-            compare("2", objects[2], match[2]);
-            compare("3", objects[3], match[3]);
-            compare("4", objects[4], match[4]);
+        function compareState(store: { getArray(): any[] }, match: any[]) {
+            comapreArray("state", store.getArray(), match);
         }
 
-        main.addDirtyObject(obj1);
-        main.addDirtyObject(obj2);
+        compareState(main, [null, null, null, null, null]);
+        compareState(slave, [null, null, null, null, null]);
 
-        compareState(main.getArray(), [null, null, null, null, null]);
-        sync();
-        compareState(main.getArray(), [obj1, obj2, null, null, null]);
-        compareState(slave.getArray(), [obj1, obj2, null, null, null]);
+        main.dirtyObject(obj1);
+        main.dirtyObject(obj2);
+        compareState(main, [obj1, obj2, null, null, null]);
+        compareState(slave, [null, null, null, null, null]);
+        sync([obj1, obj2], []);
+        compareState(main, [obj1, obj2, null, null, null]);
+        compareState(slave, [obj1, obj2, null, null, null]);
 
-
-        main.addDirtyObject(obj3);
-        main.addDeletedObject(obj1);
-        sync();
-        compareState(main.getArray(), [null, obj2, obj3, null, null]);
-        compareState(slave.getArray(), [null, obj2, obj3, null, null]);
-
-        main.addDirtyObject(obj4);
-        sync();
-        compareState(main.getArray(), [obj4, obj2, obj3, null, null]);
-        compareState(slave.getArray(), [obj4, obj2, obj3, null, null]);
-
-        expectThrow(() => {
-            main.replaceObjectAtIndex(3, obj4);
-        })
-        sync();
-        compareState(main.getArray(), [obj4, obj2, obj3, null, null]);
-        compareState(slave.getArray(), [obj4, obj2, obj3, null, null]);
 
         main.replaceObjectAtIndex(4, obj5);
-        sync();
-        compareState(main.getArray(), [obj4, obj2, obj3, null, obj5]);
-        compareState(slave.getArray(), [obj4, obj2, obj3, null, obj5]);
+        compareState(main, [obj1, obj2, null, null, obj5]);
+        compareState(slave, [obj1, obj2, null, null, null]);
+        sync([obj5], []);
+        compareState(main, [obj1, obj2, null, null, obj5]);
+        compareState(slave, [obj1, obj2, null, null, obj5]);
 
 
-        main.addDeletedObject(obj4);
-        main.addDeletedObject(obj2);
-        main.addDeletedObject(obj3);
-        main.addDeletedObject(obj5);
-        sync();
-        compareState(main.getArray(), [null, null, null, null, null]);
-        compareState(slave.getArray(), [null, null, null, null, null]);
+        expectThrow(() => {
+            main.dirtyObject(obj3);
+        });
+        compareState(main, [obj1, obj2, null, null, obj5]);
+        compareState(slave, [obj1, obj2, null, null, obj5]);
+        sync([], []);
+        compareState(main, [obj1, obj2, null, null, obj5]);
+        compareState(slave, [obj1, obj2, null, null, obj5]);
+
+        main.deleteObject(obj5);
+        compareState(main, [obj1, obj2, null, null, null]);
+        compareState(slave, [obj1, obj2, null, null, obj5]);
+        sync([], [obj5]);
+        compareState(main, [obj1, obj2, null, null, null]);
+        compareState(slave, [obj1, obj2, null, null, null]);
+
+        main.moveAllToLeft();
+        compareState(main, [obj1, obj2, null, null, null]);
+        compareState(slave, [obj1, obj2, null, null, null]);
+        sync([], []);
+        compareState(main, [obj1, obj2, null, null, null]);
+        compareState(slave, [obj1, obj2, null, null, null]);
+
+
+        main.dirtyObject(obj3);
+        compareState(main, [obj1, obj2, obj3, null, null]);
+        compareState(slave, [obj1, obj2, null, null, null]);
+        sync([obj3], []);
+        compareState(main, [obj1, obj2, obj3, null, null]);
+        compareState(slave, [obj1, obj2, obj3, null, null]);
+
+
+        main.deleteObject(obj1);
+        compareState(main, [null, obj2, obj3, null, null]);
+        compareState(slave, [obj1, obj2, obj3, null, null]);
+        sync([], [obj1]);
+        compareState(main, [null, obj2, obj3, null, null]);
+        compareState(slave, [null, obj2, obj3, null, null]);
+
+
+        main.dirtyObject(obj4);
+        compareState(main, [obj4, obj2, obj3, null, null]);
+        compareState(slave, [null, obj2, obj3, null, null]);
+        sync([obj4], []);
+        compareState(main, [obj4, obj2, obj3, null, null]);
+        compareState(slave, [obj4, obj2, obj3, null, null]);
+
+
+        main.replaceObjectAtIndex(2, obj4);
+        compareState(main, [null, obj2, obj4, null, null]);
+        compareState(slave, [obj4, obj2, obj3, null, null]);
+        sync([obj4], [obj4]);
+        compareState(main, [null, obj2, obj4, null, null]);
+        compareState(slave, [null, obj2, obj4, null, null]);
+
+
+        main.moveAllToLeft();
+        compareState(main, [obj2, obj4, null, null, null]);
+        compareState(slave, [null, obj2, obj4, null, null]);
+        sync([obj4, obj2], [obj4]);
+        compareState(main, [obj2, obj4, null, null, null]);
+        compareState(slave, [obj2, obj4, null, null, null]);
+
+
+        main.deleteObject(obj2);
+        main.deleteObject(obj4);
+        sync([], [obj2, obj4]);
+        compareState(main, [null, null, null, null, null]);
+        compareState(slave, [null, null, null, null, null]);
     }
 
     public static power() {
         const MAX = 100000;
         const UPDATE = MAX / 2;
-        console.log("Testing with " + MAX + " objects");
-        const start = performance.now();
-        const main = new ExampleMasterObjectArray(MAX);
+        const initialObjects: MasterObject[] = [];
         for (let i = 0; i < MAX; i++) {
-            const obj: MasterObject = {
+            initialObjects.push({
                 metaId: Math.round(Math.random() * 250) + 1,
                 x: Math.round(Math.random() * 250),
                 y: Math.round(Math.random() * 250),
                 sx: Math.round(Math.random() * 30000),
                 sy: Math.round(Math.random() * 30000)
-            };
-            main.addDirtyObject(obj);
+            })
+        }
+
+        console.log("Testing with " + MAX + " objects");
+        const start = performance.now();
+        const main = new ExampleMasterObjectArray(MAX);
+        for (let i = 0; i < initialObjects.length; i++) {
+            main.dirtyObject(initialObjects[i]);
         }
         console.log("A1: " + (performance.now() - start) + " (populate main)");
 
@@ -141,10 +208,10 @@ export class SyncTest {
         const objects = main.getArray();
         for (let i = 0; i < UPDATE; i++) {
             objects[i].x = 10;
-            main.addDirtyObject(objects[i]);
+            main.dirtyObject(objects[i]);
         }
         for (let i = UPDATE; i < UPDATE + UPDATE; i++) {
-            main.addDeletedObject(objects[i]);
+            main.deleteObject(objects[i]);
         }
         console.log("A8: " + (performance.now() - start8) + " (update elements, delete elements)");
 

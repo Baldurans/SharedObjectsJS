@@ -2,7 +2,7 @@ import {StateBuffer} from "./StateBuffer";
 
 export interface StateBufferForMasterListeners<T> {
     populateMemory: (index: number, obj: T) => void;
-    deleteMemory: (index: number, obj: T) => void;
+    deleteMemory: (index: number) => void;
 }
 
 export class StateBufferForMaster<T extends object> extends StateBuffer {
@@ -10,19 +10,36 @@ export class StateBufferForMaster<T extends object> extends StateBuffer {
     private readonly maxObjects: number;
     private readonly indexToObject: T[] = [];
     private readonly objectToIndex: Map<T, number> = new Map();
-    private readonly dirty: Set<T> = new Set();
-    private readonly deleted: Set<T> = new Set();
+    private readonly dirty: Set<number> = new Set();
     private readonly listeners: StateBufferForMasterListeners<T>;
 
     protected noOfObjects: number = 0;
     protected unusedIndexes: number[] = [];
 
     private isFlushing = false;
+    private flushInterval: ReturnType<typeof setInterval>;
+
+    public static readonly FLUSH_FPS = 60;
 
     constructor(maxObjects: number, listeners: StateBufferForMasterListeners<T>) {
         super(maxObjects);
         this.maxObjects = maxObjects;
         this.listeners = listeners;
+    }
+
+    public initPeriodicFlush(fps?: number) {
+        if (this.flushInterval) {
+            return;
+        }
+        this.flushInterval = setInterval(() => {
+            this.flushToMemory();
+        }, Math.floor(1000 / (fps ? fps : StateBufferForMaster.FLUSH_FPS)));
+    }
+
+    public clearPeriodicFlush() {
+        if (this.flushInterval) {
+            clearInterval(this.flushInterval);
+        }
     }
 
     public flushToMemorySync(): void {
@@ -44,93 +61,116 @@ export class StateBufferForMaster<T extends object> extends StateBuffer {
 
     private _flushToMemory() {
         this.handleDirty();
-        this.handleDeleted();
         this.controlBuffer[StateBuffer.NO_OF_OBJECTS_INDEX] = this.noOfObjects;
     }
 
     private handleDirty() {
-        this.dirty.forEach((obj) => {
-            if (this.deleted.has(obj)) {
-                return;
+        this.dirty.forEach((index) => {
+
+            const obj = this.indexToObject[index];
+            if (obj) {
+                this.listeners.populateMemory(index, obj);
+            } else {
+                this.listeners.deleteMemory(index);
             }
 
-            let index = this.objectToIndex.get(obj);
-            if (index === undefined) {
-                if (this.unusedIndexes.length > 0) {
-                    index = this.unusedIndexes.pop();
-                } else {
-                    index = this.noOfObjects;
-                    if (this.noOfObjects === this.maxObjects) {
-                        throw new Error("MAX objects reached!" + this.noOfObjects + "/" + this.maxObjects);
-                    }
-                    this.noOfObjects++;
-                }
-                this.objectToIndex.set(obj, index);
-                this.indexToObject[index] = obj;
+            if (this.isDirtyBuffer[index] === StateBuffer.CLEAN) {
+                const nextI = this.controlBuffer[StateBuffer.NO_OF_DIRTY_OBJECTS_INDEX]
+                this.controlBuffer[StateBuffer.NO_OF_DIRTY_OBJECTS_INDEX]++;
+                this.changesBuffer[nextI] = index;
+                this.isDirtyBuffer[index] = StateBuffer.DIRTY;
             }
-
-            this.registerDirtyIndex(index);
-
-            this.listeners.populateMemory(index, obj);
         });
         this.dirty.clear();
     }
 
-    private handleDeleted() {
-        this.deleted.forEach((obj) => {
-            let index = this.objectToIndex.get(obj);
-            if (index !== undefined) {
-                this.objectToIndex.delete(obj);
-                this.indexToObject[index] = undefined;
-                this.unusedIndexes.push(index);
-                this.registerDirtyIndex(index);
-                this.listeners.deleteMemory(index, obj);
-            }
-        });
-        this.deleted.clear();
-    }
-
-    private registerDirtyIndex(index: number) {
-        if (!this.isDirtyBuffer[index]) {
-            const nextI = this.controlBuffer[StateBuffer.NO_OF_DIRTY_OBJECTS_INDEX]
-            this.controlBuffer[StateBuffer.NO_OF_DIRTY_OBJECTS_INDEX]++;
-            this.changesBuffer[nextI] = index;
-            this.isDirtyBuffer[index] = 1;
+    public replaceObjectAt(index: number, object: T) {
+        if (this.indexToObject[index]) {
+            this.deleteObject(this.indexToObject[index]);
         }
-    }
-
-    public replaceObjectAtIndex(index: number, object: T) {
-        if (this.objectToIndex.get(object) !== undefined) {
-            throw new Error("Object is already part of index. Create new object to add it again or wait until it is removed and synced to worker");
+        if (this.objectToIndex.has(object)) {
+            this.deleteObject(object);
         }
-
-        const existingObj = this.indexToObject[index];
-        if (existingObj === object) { // Already added to exact same spot.
-            return;
-        }
-
-        if (existingObj) {
-            this.indexToObject[index] = undefined;
-            this.objectToIndex.delete(existingObj);
-            this.dirty.delete(existingObj);
-            this.deleted.delete(existingObj);
-        }
-
         if (index >= this.noOfObjects) {
             this.noOfObjects = index + 1;
         }
-        this.indexToObject[index] = object;
+        this.addObjectToIndex(object, index);
+    }
+
+    public dirtyObject(object: T) {
+        let index = this.objectToIndex.get(object);
+        if (index === undefined) {
+            if (this.unusedIndexes.length > 0) {
+                index = this.getNextUnusedIndex();
+            } else {
+                if (this.noOfObjects === this.maxObjects) {
+                    throw new Error("MAX objects reached!" + this.noOfObjects + "/" + this.maxObjects);
+                }
+                index = this.noOfObjects;
+                this.noOfObjects++;
+            }
+            this.addObjectToIndex(object, index);
+        } else {
+            this.dirty.add(index);
+        }
+    }
+
+    private getNextUnusedIndex(): number | undefined {
+        while (true) {
+            if (this.unusedIndexes.length === 0) {
+                return undefined;
+            }
+            const index = this.unusedIndexes.pop();
+            if (this.indexToObject[index] === undefined) {
+                return index;
+            }
+        }
+    }
+
+    private addObjectToIndex(object: T, index: number) {
         this.objectToIndex.set(object, index);
-        this.dirty.add(object);
-        this.deleted.delete(object);
+        this.indexToObject[index] = object;
+        this.dirty.add(index);
     }
 
-    public addDirtyObject(object: T) {
-        this.dirty.add(object);
+    public deleteObject(object: T) {
+        const index = this.objectToIndex.get(object);
+        if (index === undefined) {
+            return;
+        }
+        this.unusedIndexes.push(index);
+        this.objectToIndex.delete(object);
+        this.indexToObject[index] = undefined;
+        this.dirty.add(index);
     }
 
-    public addDeletedObject(object: T) {
-        this.deleted.add(object);
+    /**
+     * Optimizes memory usage by moving all items to left if there are unused indexes. O(n)
+     * Use this only if you understand when it is useful and when it is useless. addDirty reuses indexes that have been deleted.
+     * In most cases you do not need this.
+     */
+    public moveAllToLeft() {
+        let nextObjIndex = 0;
+        for (let i = 0; i < this.indexToObject.length; i++) {
+            const current = this.indexToObject[i];
+            if (current === undefined) {
+                continue;
+            }
+
+            if (nextObjIndex !== i) {
+                this.objectToIndex.delete(current);
+                this.indexToObject[i] = undefined;
+                this.objectToIndex.set(current, nextObjIndex);
+                this.indexToObject[nextObjIndex] = current;
+                this.dirty.add(i);
+                this.dirty.add(nextObjIndex);
+            }
+
+            nextObjIndex++;
+        }
+        this.unusedIndexes.length = 0;
+        this.indexToObject.length = nextObjIndex;
+        this.noOfObjects = nextObjIndex;
     }
 
     public getArray(): Array<T | undefined> {

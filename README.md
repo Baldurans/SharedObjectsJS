@@ -44,10 +44,10 @@ worker.postMessage({buffers: main.export()});
 const obj1 = {x: 1, y: 2};
 const obj2 = {x: 3, y: 4};
 
-main.addDirtyObject(obj1);
-main.addDirtyObject(obj2);
-main.addDeletedObject(obj1);
-main.replaceObjectAtIndex(0, obj1);
+main.dirtyObject(obj1);
+main.dirtyObject(obj2);
+main.deleteObject(obj1);
+main.replaceObjectAt(0, obj1);
 main.flushToMemory(); // Flushes contents to shared memory (while doing so memory is locked)
 
 

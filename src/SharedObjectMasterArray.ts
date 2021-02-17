@@ -9,18 +9,18 @@ export abstract class SharedObjectMasterArray<T extends object> {
             populateMemory: (index, obj) => {
                 this.populateMemory(index, obj)
             },
-            deleteMemory: (index, obj) => {
-                this.deleteMemory(index, obj)
+            deleteMemory: (index) => {
+                this.deleteMemory(index)
             }
         });
     }
 
     protected abstract populateMemory(index: number, obj: T): void;
 
-    protected abstract deleteMemory(index: number, obj: T): void;
+    protected abstract deleteMemory(index: number): void;
 
     public replaceObjectAtIndex(index: number, object: T) {
-        this.stateBuffer.replaceObjectAtIndex(index, object);
+        this.stateBuffer.replaceObjectAt(index, object);
     }
 
     public flushToMemory() {
@@ -31,12 +31,16 @@ export abstract class SharedObjectMasterArray<T extends object> {
         this.stateBuffer.flushToMemorySync();
     }
 
-    public addDirtyObject(obj: T) {
-        this.stateBuffer.addDirtyObject(obj);
+    public dirtyObject(obj: T) {
+        this.stateBuffer.dirtyObject(obj);
     }
 
-    public addDeletedObject(obj: T) {
-        this.stateBuffer.addDeletedObject(obj);
+    public deleteObject(obj: T) {
+        this.stateBuffer.deleteObject(obj);
+    }
+
+    public moveAllToLeft() {
+        this.stateBuffer.moveAllToLeft();
     }
 
     public export(): StateBufferExport {
