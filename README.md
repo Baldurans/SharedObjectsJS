@@ -28,11 +28,17 @@ npm install shared-objects
 #### General algorithm
 MASTER
 1) On your tick make your calculations and add dirty objects to MASTER
-2) MASTER.flushToMemory()
+2) master.flushToMemory()
+     - lock memory
+     - update shared array buffers
+     - unlock
 3) back to beginning
 
 SLAVE
-1) requestAnimationFrame calls 'const changes = slave.sync()' - loads and detects changes in shared memory.
+1) const changes = slave.sync() for example called in requestAnimationFrame handler.
+     - lock memory
+     - update local objects
+     - unlock
 2) update OffscreenCanvas based on changes.
 3) back to beginning
 
