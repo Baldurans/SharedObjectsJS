@@ -1,24 +1,31 @@
 # Share objects in WebWorkers using SharedArrayBuffer
 
-This is rather compact/small specific purpose master-slave solution. (MAX 1 slave)
+This is a master-slave solution for sharing data between the main thread and a single worker.
 Master updates data, slave consumes data and understands what changed.
-Slave is eventually consistent.
-Delay on slave depends on how often you call master.flushToMemory() and slave.populateObjects()
+
+Main use case is using it to sync fast changing data with worker thread in an efficient way. Main purpose for 
+worker could be rendering offscreen canvas.
 
 #### Where is it useful?
 When:
 * updating your Canvas on the main thread just won't do.
 * you need to use OffscreenCanvas 
-* you need to sync lots of data to webWorker to render its contents. (worker.postMessage is not an option!)
-* you want to abstract all memory sync and related out from your main application.
+* you need to sync lots of data to webWorker to render its contents. (worker.postMessage is not an option)
+* you want to abstract all memory synchronization issues and related out from your main application.
+* you are ok with eventual consistency (for example game loop interval is different from visible frame rate)
 
 #### Why?
-* There is no other way to my knowledge to populate workers with big amount of data that changes very fast.
+* There is no other way to my knowledge to populate workers with big amount of data that changes often.
 * It gives protection against shared memory issues in rather simple way. 
 * All writes and reads happen in bulk while keeping the lock. 
 * This way every minor updates to the data does not have to deal with locking.
 
-#### General algoritm
+#### Install
+```
+npm install shared-objects
+```
+
+#### General algorithm
 MASTER
 1) On your tick make your calculations and add dirty objects to MASTER
 2) MASTER.flushToMemory()
@@ -36,13 +43,13 @@ Its fast enough for ~30 fps with 100k objects that change every frame.
 (Depends on the CPU and million other things of course, but to just give you ball park figure.)
 
 #### How slave handles objects and references?
-Lets say master has object on index X. If you replace that object in master, then in slave it will:
+Let's say master has object on index X. If you replace that object in master, then in slave it will:
 * Just see that properties changed and report it as changed. (in slave it is still reference to same object, while in master it is new object.).
 * It will not see deletion and addition, only change of property values.
 
 If you use it for OffScreenCanvas case, it should not really be a concern.
 
-## Example
+## Example of use case
 ```
 // IN Main thread
 const main = new ExampleMasterObjectArray(5);
@@ -68,15 +75,101 @@ const f = () => {
 f();
 ```
 
-## Example
-For actual code example check src/test/Example.ts
-That file contains code that developer would need to write to set it up.
+## Example of definition
+```
+export class ExampleMasterObjectArray extends SharedObjectMasterArray<MasterObject> {
+
+    private readonly main: Uint8Array;
+    private readonly sec: Uint32Array;
+
+    public constructor( maxObjects: number ) {
+        super(maxObjects);
+        this.main = new Uint8Array(new SharedArrayBuffer(maxObjects * 3 * Uint8Array.BYTES_PER_ELEMENT));
+        this.sec = new Uint32Array(new SharedArrayBuffer(maxObjects * 2 * Uint32Array.BYTES_PER_ELEMENT));
+    }
+
+    protected populateMemory(index: number, obj: MasterObject) {
+        const pos = index * 3;
+        const pos2 = index * 2;
+        this.main[pos] = obj.metaId;
+        this.main[pos + 1] = obj.x;
+        this.main[pos + 2] = obj.y;
+        this.sec[pos2] = obj.sx;
+        this.sec[pos2 + 1] = obj.sy;
+    }
+
+    protected deleteMemory(index: number) {
+        const pos = index * 3;
+        const pos2 = index * 2;
+        this.main[pos] = 0;
+        this.main[pos + 1] = 0;
+        this.main[pos + 2] = 0;
+        this.sec[pos2] = 0;
+        this.sec[pos2 + 1] = 0;
+    }
+
+    public export(): ExampleBuffersExport {
+        return {
+            ...super.export(),
+            main: this.main.buffer as SharedArrayBuffer,
+            sec: this.sec.buffer as SharedArrayBuffer,
+        }
+    }
+}
+
+export interface MasterObject {
+    metaId: number;
+    x: number;
+    y: number;
+    sx: number;
+    sy: number;
+}
+
+export class ExampleSlaveObjectArray extends SharedObjectSlaveArray<SlaveObject> {
+
+    private readonly main: Uint8Array;
+    private readonly sec: Uint32Array;
+
+    public constructor(buffers: ExampleBuffersExport) {
+        super(buffers);
+        this.main = new Uint8Array(buffers.main)
+        this.sec = new Uint32Array(buffers.sec)
+    }
+
+    protected updateObject(index: number, obj: SlaveObject | undefined): SlaveObject | undefined {
+        if (!obj) {
+            obj = {} as any;
+        }
+        if (this.main[index * 3] === 0) {
+            return undefined;
+        }
+        const pos = index * 3;
+        const pos2 = index * 2;
+        obj.metaId = this.main[pos];
+        obj.x = this.main[pos + 1];
+        obj.y = this.main[pos + 2];
+        obj.sx = this.sec[pos2];
+        obj.sy = this.sec[pos2 + 1];
+        return obj;
+    }
+}
+
+export interface SlaveObject {
+    metaId: number;
+    x: number;
+    y: number;
+    sx: number;
+    sy: number;
+}
+
+export interface ExampleBuffersExport extends StateBufferExport {
+    main: SharedArrayBuffer;
+    sec: SharedArrayBuffer;
+}
+```
 
 ## Warnings
 It uses SharedArrayBuffer and Atomics. Make sure your target browsers support those!
-
-## Tests
-I was too lazy to do it properly, worked for my case :)
 
 ## License
 MIT - Do what ever you want with it. If you found it useful, let me know :)

@@ -1,4 +1,7 @@
 tsconfig.json
 src
 disttest
-
+node_modules
+test
+.idea
+tsconfig.defaults.json
