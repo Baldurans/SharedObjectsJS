@@ -13,7 +13,7 @@ export abstract class SharedObjectSlaveArray<T extends object> {
         });
     }
 
-    protected abstract updateObject(index: number, obj: T | null): T | null;
+    protected abstract updateObject(index: number, obj: T | undefined): T | undefined;
 
     public init(): this {
         this.stateBuffer.init();

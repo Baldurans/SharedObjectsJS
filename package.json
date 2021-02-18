@@ -17,7 +17,7 @@
     "url": "git+https://github.com/Baldurans/SharedObjectsJS.git"
   },
   "scripts": {
-    "test": "tsc --build ./test && jest",
+    "test": "jest",
     "build": "tsc --build ./src/"
   },
   "engines": {

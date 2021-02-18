@@ -2,7 +2,7 @@ import {StateBuffer} from "./StateBuffer";
 import {StateBufferExport} from "./StateBufferForMaster";
 
 export interface StateBufferForMasterListeners<T> {
-    updateObject: (index: number, obj: T | null) => T | null;
+    updateObject: (index: number, obj: T | undefined) => T | undefined;
 }
 
 export class StateBufferForSlave<T> extends StateBuffer {
@@ -19,7 +19,7 @@ export class StateBufferForSlave<T> extends StateBuffer {
         this.lock();
         const noOfObjects = this.controlBuffer[StateBufferForSlave.NO_OF_OBJECTS_INDEX];
         for (let i = 0; i < noOfObjects; i++) {
-            this.objects[i] = this.listeners.updateObject(i, null);
+            this.objects[i] = this.listeners.updateObject(i, undefined);
         }
         this.releaseLock();
     }
@@ -37,8 +37,8 @@ export class StateBufferForSlave<T> extends StateBuffer {
         for (let i = 0; i < noOfChanges; i++) {
             const index = this.changesBuffer[i];
 
-            const existing = this.objects[index] || null;
-            let updated: T = this.listeners.updateObject(index, existing) || null;
+            const existing = this.objects[index] || undefined;
+            let updated: T = this.listeners.updateObject(index, existing) || undefined;
             if (updated) {
                 changes.updated.push(updated);
             } else if (existing) {
@@ -50,6 +50,10 @@ export class StateBufferForSlave<T> extends StateBuffer {
             this.changesBuffer[i] = 0;
         }
         this.controlBuffer[StateBuffer.NO_OF_DIRTY_OBJECTS_INDEX] = 0;
+        const noOfObjects = this.controlBuffer[StateBufferForSlave.NO_OF_OBJECTS_INDEX];
+        if (noOfObjects < this.objects.length) {
+            this.objects.length = noOfObjects;
+        }
 
         this.releaseLock();
 

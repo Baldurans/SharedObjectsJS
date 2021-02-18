@@ -61,12 +61,12 @@ export class ExampleSlaveObjectArray extends SharedObjectSlaveArray<SlaveObject>
         this.sec = new Uint32Array(buffers.sec)
     }
 
-    protected updateObject(index: number, obj: SlaveObject | null): SlaveObject | null {
+    protected updateObject(index: number, obj: SlaveObject | undefined): SlaveObject | undefined {
         if (!obj) {
             obj = {} as any;
         }
         if (this.main[index * 3] === 0) {
-            return null;
+            return undefined;
         }
         const pos = index * 3;
         const pos2 = index * 2;
