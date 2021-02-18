@@ -1,6 +1,6 @@
 {
   "name": "shared-objects",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Master-slave solution for sharing objects using SharedArrayBuffer fast and safely for OffscreenCanvas.",
   "author": "Oliver Leisalu",
   "license": "MIT",
