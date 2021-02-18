@@ -1,6 +1,6 @@
 import {StateBufferExport, StateBufferForMaster} from "./StateBufferForMaster";
 
-export abstract class SharedObjectMasterArray<T extends object> {
+export abstract class SharedObjectArrayMaster<T extends object> {
 
     private readonly stateBuffer: StateBufferForMaster<T>;
 

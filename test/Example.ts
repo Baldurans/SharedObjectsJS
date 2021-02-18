@@ -1,8 +1,8 @@
-import {SharedObjectMasterArray} from "../src/SharedObjectMasterArray";
-import {SharedObjectSlaveArray} from "../src/SharedObjectSlaveArray";
+import {SharedObjectArrayMaster} from "../src/SharedObjectArrayMaster";
+import {SharedObjectArraySlave} from "../src/SharedObjectArraySlave";
 import {StateBufferExport} from "../src/StateBufferForMaster";
 
-export class ExampleMasterObjectArray extends SharedObjectMasterArray<MasterObject> {
+export class ExampleMasterObjectArray extends SharedObjectArrayMaster<MasterObject> {
 
     private readonly main: Uint8Array;
     private readonly sec: Uint32Array;
@@ -50,7 +50,7 @@ export interface MasterObject {
     sy: number;
 }
 
-export class ExampleSlaveObjectArray extends SharedObjectSlaveArray<SlaveObject> {
+export class ExampleSlaveObjectArray extends SharedObjectArraySlave<SlaveObject> {
 
     private readonly main: Uint8Array;
     private readonly sec: Uint32Array;
