@@ -93,22 +93,30 @@ test("main", () => {
     main.replaceObjectAtIndex(2, obj4);
     compareState(main, [undefined, obj2, obj4]);
     compareState(slave, [obj4, obj2, obj3]);
-    sync([obj4], [obj4]);
+    sync([obj4], [obj3, obj4]);
     compareState(main, [undefined, obj2, obj4]);
     compareState(slave, [undefined, obj2, obj4]);
 
 
-    main.moveAllToLeft();
-    compareState(main, [obj2, obj4]);
+    main.replaceObjectAtIndex(2, obj5);
+    compareState(main, [undefined, obj2, obj5]);
     compareState(slave, [undefined, obj2, obj4]);
-    sync([obj4, obj2], [obj4]);
-    compareState(main, [obj2, obj4]);
-    compareState(slave, [obj2, obj4]);
+    sync([obj5], [obj4]);
+    compareState(main, [undefined, obj2, obj5]);
+    compareState(slave, [undefined, obj2, obj5]);
+
+
+    main.moveAllToLeft();
+    compareState(main, [obj2, obj5]);
+    compareState(slave, [undefined, obj2, obj5]);
+    sync([obj5, obj2], [obj2, obj5]);
+    compareState(main, [obj2, obj5]);
+    compareState(slave, [obj2, obj5]);
 
 
     main.deleteObject(obj2);
-    main.deleteObject(obj4);
-    sync([], [obj2, obj4]);
+    main.deleteObject(obj5);
+    sync([], [obj2, obj5]);
     compareState(main, [undefined, undefined]);
     compareState(slave, [undefined, undefined]);
 

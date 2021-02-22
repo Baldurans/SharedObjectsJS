@@ -48,13 +48,6 @@ Complexity of change detection is O(no_of_objects_changed).
 Its fast enough for ~30 fps with 100k objects that change every frame. 
 (Depends on the CPU and million other things of course, but to just give you ball park figure.)
 
-#### How slave handles objects and references?
-Let's say master has object on index X. If you replace that object in master, then in slave it will:
-* Just see that properties changed and report it as changed. (in slave it is still reference to same object, while in master it is new object.).
-* It will not see deletion and addition, only change of property values.
-
-If you use it for OffScreenCanvas case, it should not really be a concern.
-
 ## Example of use case
 ```
 // IN Main thread

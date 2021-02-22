@@ -41,7 +41,9 @@ export class StateBufferForSlave<T> extends StateBuffer {
             let updated: T = this.listeners.updateObject(index, existing) || undefined;
             if (updated) {
                 changes.updated.push(updated);
-            } else if (existing) {
+            }
+
+            if (existing && updated !== existing) {
                 changes.deleted.push(existing);
             }
 
