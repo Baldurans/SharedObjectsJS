@@ -30,7 +30,7 @@ export abstract class StateBuffer {
 
     protected constructor(buffersOrMaxObjects: number | StateBufferExport) {
         if (typeof buffersOrMaxObjects === "number") {
-            this.controlBuffer = new Int32Array(new SharedArrayBuffer(StateBuffer.CONTROL_BUFFER_LENGTH * Uint32Array.BYTES_PER_ELEMENT))
+            this.controlBuffer = new Int32Array(new SharedArrayBuffer(StateBuffer.CONTROL_BUFFER_LENGTH * Int32Array.BYTES_PER_ELEMENT))
             this.changesBuffer = new Uint32Array(new SharedArrayBuffer(buffersOrMaxObjects * Uint32Array.BYTES_PER_ELEMENT))
             this.isDirtyBuffer = new Uint8Array(new SharedArrayBuffer(buffersOrMaxObjects * Uint8Array.BYTES_PER_ELEMENT))
         } else {

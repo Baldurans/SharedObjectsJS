@@ -9,6 +9,7 @@ export class StateBufferForSlave<T> extends StateBuffer {
 
     private readonly listeners: StateBufferForMasterListeners<T>;
     private readonly objects: T[] = [];
+    private isInitialized = false;
 
     constructor(buffers: StateBufferExport, listeners: StateBufferForMasterListeners<T>) {
         super(buffers);
@@ -17,6 +18,7 @@ export class StateBufferForSlave<T> extends StateBuffer {
 
     public init() {
         this.lock();
+        this.isInitialized = false;
         const noOfObjects = this.controlBuffer[StateBufferForSlave.NO_OF_OBJECTS_INDEX];
         for (let i = 0; i < noOfObjects; i++) {
             this.objects[i] = this.listeners.updateObject(i, undefined);
@@ -32,29 +34,35 @@ export class StateBufferForSlave<T> extends StateBuffer {
 
         this.lock();
 
-        const noOfChanges = this.controlBuffer[StateBufferForSlave.NO_OF_DIRTY_OBJECTS_INDEX];
+        if (this.isInitialized === false) {
+            changes.updated = this.objects;
+            this.isInitialized = true;
 
-        for (let i = 0; i < noOfChanges; i++) {
-            const index = this.changesBuffer[i];
+        } else {
+            const noOfChanges = this.controlBuffer[StateBufferForSlave.NO_OF_DIRTY_OBJECTS_INDEX];
 
-            const existing = this.objects[index] || undefined;
-            let updated: T = this.listeners.updateObject(index, existing) || undefined;
-            if (updated) {
-                changes.updated.push(updated);
+            for (let i = 0; i < noOfChanges; i++) {
+                const index = this.changesBuffer[i];
+
+                const existing = this.objects[index] || undefined;
+                let updated: T = this.listeners.updateObject(index, existing) || undefined;
+                if (updated) {
+                    changes.updated.push(updated);
+                }
+
+                if (existing && updated !== existing) {
+                    changes.deleted.push(existing);
+                }
+
+                this.objects[index] = updated;
+                this.isDirtyBuffer[index] = StateBuffer.CLEAN;
+                this.changesBuffer[i] = 0;
             }
-
-            if (existing && updated !== existing) {
-                changes.deleted.push(existing);
+            this.controlBuffer[StateBuffer.NO_OF_DIRTY_OBJECTS_INDEX] = 0;
+            const noOfObjects = this.controlBuffer[StateBufferForSlave.NO_OF_OBJECTS_INDEX];
+            if (noOfObjects < this.objects.length) {
+                this.objects.length = noOfObjects;
             }
-
-            this.objects[index] = updated;
-            this.isDirtyBuffer[index] = StateBuffer.CLEAN;
-            this.changesBuffer[i] = 0;
-        }
-        this.controlBuffer[StateBuffer.NO_OF_DIRTY_OBJECTS_INDEX] = 0;
-        const noOfObjects = this.controlBuffer[StateBufferForSlave.NO_OF_OBJECTS_INDEX];
-        if (noOfObjects < this.objects.length) {
-            this.objects.length = noOfObjects;
         }
 
         this.releaseLock();

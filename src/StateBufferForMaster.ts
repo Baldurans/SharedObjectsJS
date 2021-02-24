@@ -60,20 +60,13 @@ export class StateBufferForMaster<T extends object> extends StateBuffer {
     }
 
     private _flushToMemory() {
-        this.handleDirty();
-        this.controlBuffer[StateBuffer.NO_OF_OBJECTS_INDEX] = this.noOfObjects;
-    }
-
-    private handleDirty() {
         this.dirty.forEach((index) => {
-
             const obj = this.indexToObject[index];
             if (obj) {
                 this.listeners.populateMemory(index, obj);
             } else {
                 this.listeners.deleteMemory(index);
             }
-
             if (this.isDirtyBuffer[index] === StateBuffer.CLEAN) {
                 const nextI = this.controlBuffer[StateBuffer.NO_OF_DIRTY_OBJECTS_INDEX]
                 this.controlBuffer[StateBuffer.NO_OF_DIRTY_OBJECTS_INDEX]++;
@@ -81,6 +74,7 @@ export class StateBufferForMaster<T extends object> extends StateBuffer {
                 this.isDirtyBuffer[index] = StateBuffer.DIRTY;
             }
         });
+        this.controlBuffer[StateBuffer.NO_OF_OBJECTS_INDEX] = this.noOfObjects;
         this.dirty.clear();
     }
 
