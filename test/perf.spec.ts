@@ -38,7 +38,7 @@ test("perf", () => {
     main.flushToMemorySync();
     perf = perf("sync to memory");
 
-    const slave = new ExampleSlaveObjectArray(main.export()).init();
+    const slave = new ExampleSlaveObjectArray(main.export());
     perf = perf("start slave");
 
     slave.sync();

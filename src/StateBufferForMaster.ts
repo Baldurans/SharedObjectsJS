@@ -61,6 +61,7 @@ export class StateBufferForMaster<T extends object> extends StateBuffer {
 
     private _flushToMemory() {
         this.dirty.forEach((index) => {
+
             const obj = this.indexToObject[index];
             if (obj) {
                 this.listeners.populateMemory(index, obj);

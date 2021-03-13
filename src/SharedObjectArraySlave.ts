@@ -15,11 +15,6 @@ export abstract class SharedObjectArraySlave<T extends object> {
 
     protected abstract updateObject(index: number, obj: T | undefined): T | undefined;
 
-    public init(): this {
-        this.stateBuffer.init();
-        return this;
-    }
-
     public sync(): StateBufferForSlaveChanges<T> {
         return this.stateBuffer.sync();
     }
