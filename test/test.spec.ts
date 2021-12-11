@@ -37,7 +37,7 @@ test("main", () => {
     compareState(slave, [obj1, obj2]);
 
 
-    main.replaceObjectAtIndex(4, obj5);
+    main.replaceObjectAt(4, obj5);
     compareState(main, [obj1, obj2, undefined, undefined, obj5]);
     compareState(slave, [obj1, obj2]);
     sync([obj5], [], []);
@@ -52,7 +52,7 @@ test("main", () => {
     compareState(slave, [obj1, obj2, undefined, undefined, obj5]);
 
     expect(() => {
-        main.dirtyObject(obj3);
+        main.dirtyObject(obj3); // Max objects reached
     }).toThrow();
     compareState(main, [obj1, obj2, undefined, undefined, obj5]);
     compareState(slave, [obj1, obj2, undefined, undefined, obj5]);
@@ -98,7 +98,7 @@ test("main", () => {
     compareState(slave, [obj4, obj2, obj3]);
 
 
-    main.replaceObjectAtIndex(2, obj4);
+    main.replaceObjectAt(2, obj4);
     compareState(main, [undefined, obj2, obj4]);
     compareState(slave, [obj4, obj2, obj3]);
     sync([obj4], [], [obj3, obj4]);
@@ -106,7 +106,7 @@ test("main", () => {
     compareState(slave, [undefined, obj2, obj4]);
 
 
-    main.replaceObjectAtIndex(2, obj5);
+    main.replaceObjectAt(2, obj5);
     compareState(main, [undefined, obj2, obj5]);
     compareState(slave, [undefined, obj2, obj4]);
     sync([obj5], [], [obj4]);

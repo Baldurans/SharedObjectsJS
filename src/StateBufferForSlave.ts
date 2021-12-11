@@ -1,21 +1,20 @@
-import {StateBuffer} from "./StateBuffer";
-import {StateBufferExport} from "./StateBufferForMaster";
+import {StateBuffer, StateBufferExport} from "./StateBuffer";
 
-export interface StateBufferForMasterListeners<T> {
-    updateObject: (index: number, obj: T | undefined) => T | undefined;
-}
+export abstract class StateBufferForSlave<T> extends StateBuffer {
 
-export class StateBufferForSlave<T> extends StateBuffer {
-
-    private readonly listeners: StateBufferForMasterListeners<T>;
     private readonly objects: T[] = [];
     private readonly objectsSet: Set<T> = new Set();
     private isInitialized = false;
 
-    constructor(buffers: StateBufferExport, listeners: StateBufferForMasterListeners<T>) {
+    constructor(buffers: StateBufferExport) {
         super(buffers);
-        this.listeners = listeners;
     }
+
+    protected abstract exists(index: number): boolean;
+
+    protected abstract isSame(index: number, obj: T): boolean;
+
+    protected abstract updateObject(index: number, obj: T | undefined): T | undefined;
 
     public sync(): StateBufferForSlaveChanges<T> {
         const changes: StateBufferForSlaveChanges<T> = {
@@ -24,8 +23,17 @@ export class StateBufferForSlave<T> extends StateBuffer {
             deleted: []
         }
 
-        const handleObject = (changeIndex: number, objIndex: number, existing: T) => {
-            let updated: T = this.listeners.updateObject(objIndex, existing) || undefined;
+        const handleObject = (changeIndex: number, objIndex: number, obj: T | undefined) => {
+
+            let updated: T = undefined;
+            if (this.exists(objIndex)) {
+                if (obj && this.isSame(objIndex, obj)) {
+                    updated = this.updateObject(objIndex, obj);
+                } else {
+                    updated = this.updateObject(objIndex, {} as T);
+                }
+            }
+
             if (updated) {
                 if (this.objectsSet.has(updated)) {
                     changes.updated.push(updated);
@@ -35,39 +43,39 @@ export class StateBufferForSlave<T> extends StateBuffer {
                 }
             }
 
-            if (existing && updated !== existing) {
-                this.objectsSet.delete(existing);
-                changes.deleted.push(existing);
+            if (obj && updated !== obj) {
+                this.objectsSet.delete(obj);
+                changes.deleted.push(obj);
             }
 
             this.objects[objIndex] = updated;
-            this.isDirtyBuffer[objIndex] = StateBuffer.CLEAN;
-            this.changesBuffer[changeIndex] = 0;
+            this.isDirtyBufferView[objIndex] = StateBuffer.CLEAN;
+            this.changesBufferView[changeIndex] = 0;
         }
 
         this.lock();
 
         if (this.isInitialized === false) {
             this.isInitialized = true;
-            const noOfObjects = this.controlBuffer[StateBufferForSlave.NO_OF_OBJECTS_INDEX];
+            const noOfObjects = this.controlBufferView[StateBufferForSlave.NO_OF_OBJECTS_INDEX];
             for (let i = 0; i < noOfObjects; i++) {
                 handleObject(i, i, undefined);
             }
 
         } else {
-            const noOfChanges = this.controlBuffer[StateBufferForSlave.NO_OF_DIRTY_OBJECTS_INDEX];
+            const noOfChanges = this.controlBufferView[StateBufferForSlave.NO_OF_DIRTY_OBJECTS_INDEX];
             for (let i = 0; i < noOfChanges; i++) {
-                const index = this.changesBuffer[i];
-                handleObject(i, index, this.objects[index] || undefined);
+                const index = this.changesBufferView[i];
+                handleObject(i, index, this.objects[index]);
             }
 
-            const noOfObjects = this.controlBuffer[StateBufferForSlave.NO_OF_OBJECTS_INDEX];
+            const noOfObjects = this.controlBufferView[StateBufferForSlave.NO_OF_OBJECTS_INDEX];
             if (noOfObjects < this.objects.length) {
                 this.objects.length = noOfObjects;
             }
         }
 
-        this.controlBuffer[StateBuffer.NO_OF_DIRTY_OBJECTS_INDEX] = 0;
+        this.controlBufferView[StateBuffer.NO_OF_DIRTY_OBJECTS_INDEX] = 0;
         this.releaseLock();
         return changes;
     }

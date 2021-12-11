@@ -1,17 +1,10 @@
 import {StateBuffer} from "./StateBuffer";
 
-export interface StateBufferForMasterListeners<T> {
-    populateMemory: (index: number, obj: T) => void;
-    deleteMemory: (index: number) => void;
-}
+export abstract class StateBufferForMaster<T extends object> extends StateBuffer {
 
-export class StateBufferForMaster<T extends object> extends StateBuffer {
-
-    private readonly maxObjects: number;
     private readonly indexToObject: T[] = [];
     private readonly objectToIndex: Map<T, number> = new Map();
     private readonly dirty: Set<number> = new Set();
-    private readonly listeners: StateBufferForMasterListeners<T>;
 
     protected noOfObjects: number = 0;
     protected unusedIndexes: number[] = [];
@@ -21,11 +14,11 @@ export class StateBufferForMaster<T extends object> extends StateBuffer {
 
     public static readonly FLUSH_FPS = 60;
 
-    constructor(maxObjects: number, listeners: StateBufferForMasterListeners<T>) {
-        super(maxObjects);
-        this.maxObjects = maxObjects;
-        this.listeners = listeners;
+    protected constructor(maxObjects: number, objectSizeInBytes: number) {
+        super(maxObjects, objectSizeInBytes);
     }
+
+    protected abstract populateMemory(index: number, obj: T): void;
 
     public initPeriodicFlush(fps?: number) {
         if (this.flushInterval) {
@@ -61,22 +54,33 @@ export class StateBufferForMaster<T extends object> extends StateBuffer {
 
     private _flushToMemory() {
         this.dirty.forEach((index) => {
-
             const obj = this.indexToObject[index];
             if (obj) {
-                this.listeners.populateMemory(index, obj);
+                this.populateMemory(index, obj);
             } else {
-                this.listeners.deleteMemory(index);
+                this.deleteMemory(index);
             }
-            if (this.isDirtyBuffer[index] === StateBuffer.CLEAN) {
-                const nextI = this.controlBuffer[StateBuffer.NO_OF_DIRTY_OBJECTS_INDEX]
-                this.controlBuffer[StateBuffer.NO_OF_DIRTY_OBJECTS_INDEX]++;
-                this.changesBuffer[nextI] = index;
-                this.isDirtyBuffer[index] = StateBuffer.DIRTY;
+            if (this.isDirtyBufferView[index] === StateBuffer.CLEAN) {
+                const nextI = this.controlBufferView[StateBuffer.NO_OF_DIRTY_OBJECTS_INDEX]
+                this.controlBufferView[StateBuffer.NO_OF_DIRTY_OBJECTS_INDEX]++;
+                this.changesBufferView[nextI] = index;
+                this.isDirtyBufferView[index] = StateBuffer.DIRTY;
             }
         });
-        this.controlBuffer[StateBuffer.NO_OF_OBJECTS_INDEX] = this.noOfObjects;
+        this.controlBufferView[StateBuffer.NO_OF_OBJECTS_INDEX] = this.noOfObjects;
         this.dirty.clear();
+    }
+
+    private deleteMemory(index: number) {
+        if (this.view32) {
+            for (let i = index * this.size32, m = index * this.size32 + this.size32; i < m; i++) {
+                this.view32[i] = 0;
+            }
+        } else {
+            for (let i = index * this.size8, m = index * this.size8 + this.size8; i < m; i++) {
+                this.view8[i] = 0;
+            }
+        }
     }
 
     public replaceObjectAt(index: number, object: T) {
@@ -176,17 +180,4 @@ export class StateBufferForMaster<T extends object> extends StateBuffer {
         return this.indexToObject[index];
     }
 
-    public export(): StateBufferExport {
-        return {
-            controlBuffer: this.controlBuffer.buffer as SharedArrayBuffer,
-            changesBuffer: this.changesBuffer.buffer as SharedArrayBuffer,
-            isDirtyBuffer: this.isDirtyBuffer.buffer as SharedArrayBuffer
-        }
-    }
-}
-
-export interface StateBufferExport {
-    controlBuffer: SharedArrayBuffer;
-    changesBuffer: SharedArrayBuffer;
-    isDirtyBuffer: SharedArrayBuffer;
 }
