@@ -10,15 +10,18 @@ test("main", () => {
 
     const main = new ExampleMasterObjectArray(5);
     const slave = new ExampleSlaveObjectArray(main.export());
+    slave.resetReport();
 
     function sync(added: any[], updated: any[], deleted: any[]) {
         main.flushToMemorySync();
         const res = slave.sync();
-        expect(res).toEqual({
+        expect(res).toEqual(added.length > 0 || updated.length > 0 || deleted.length > 0);
+        expect(slave.report).toEqual({
             added: added,
             updated: updated,
             deleted: deleted
         });
+        slave.resetReport();
     }
 
     function compareState(store: { getArray(): any[] }, match: any[]) {

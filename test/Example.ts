@@ -29,6 +29,20 @@ export interface MasterObject {
 
 export class ExampleSlaveObjectArray extends StateBufferForSlave<SlaveObject> {
 
+    public report: {
+        added: SlaveObject[],
+        updated: SlaveObject[],
+        deleted: SlaveObject[],
+    }
+
+    public resetReport() {
+        this.report = {
+            added: [],
+            updated: [],
+            deleted: []
+        }
+    }
+
     protected exists(index: number) {
         return this.view8[index * this.size8] !== 0;
     }
@@ -37,15 +51,33 @@ export class ExampleSlaveObjectArray extends StateBufferForSlave<SlaveObject> {
         return obj.metaId === this.view8[index * this.size8];
     }
 
-    protected updateObject(index: number, obj: SlaveObject | undefined): SlaveObject | undefined {
+    protected onDelete(index: number, obj: SlaveObject): void {
+        this.report.deleted.push(obj);
+    }
+
+    protected onNew(index: number): SlaveObject {
+        const p8 = index * this.size8;
+        const obj = {
+            metaId: this.view8[p8],
+            x: 0,
+            y: 0,
+            sx: 0,
+            sy: 0
+        };
+        this.report.added.push(obj);
+        return obj
+    }
+
+    protected onUpdate(index: number, obj: SlaveObject): void {
         const p8 = index * this.size8;
         const p32 = index * this.size32;
-        obj.metaId = this.view8[p8];
         obj.x = this.view8[p8 + 1];
         obj.y = this.view8[p8 + 2];
         obj.sx = this.view32[p32 + 1];
         obj.sy = this.view32[p32 + 2];
-        return obj;
+        if (this.report.added.indexOf(obj) === -1) {
+            this.report.updated.push(obj);
+        }
     }
 }
 

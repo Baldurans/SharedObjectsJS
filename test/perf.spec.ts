@@ -39,6 +39,7 @@ test("perf", () => {
     perf = perf("sync to memory");
 
     const slave = new ExampleSlaveObjectArray(main.export());
+    slave.resetReport();
     perf = perf("start slave");
 
     slave.sync();
@@ -66,11 +67,11 @@ test("perf", () => {
     main.flushToMemorySync();
     perf = perf("sync to memory");
 
-    const res = slave.sync();
-    perf = perf("read from slave - updated: " + res.updated.length + " deleted: " + res.deleted.length + "");
+    slave.sync();
+    perf = perf("read from slave");
 
-    const res2 = slave.sync();
-    perf("read from slave - updated: " + res2.updated.length + " deleted: " + res2.deleted.length + "");
+    slave.sync();
+    perf("read from slave");
 
     console.log(str);
 });
