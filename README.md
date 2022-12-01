@@ -1,54 +1,61 @@
 # Share objects in WebWorkers using SharedArrayBuffer
 
-This is a master-slave solution for sharing data between the main thread and a single worker.
-Master updates data, slave consumes data and understands what changed.
+This is a master-slave solution for sharing data between the main thread and a single worker. Master updates data, slave consumes data and understands what changed.
 
-Main use case is using it to sync fast changing data with worker thread in an efficient way. Main purpose for 
-worker could be rendering offscreen canvas.
+Main use case is using it to sync fast changing data with worker thread in an efficient way. Main purpose for worker could be rendering offscreen canvas.
 
 #### Where is it useful?
+
 When:
+
 * updating your Canvas on the main thread just won't do.
-* you need to use OffscreenCanvas 
+* you need to use OffscreenCanvas
 * you need to sync lots of data to webWorker to render its contents. (worker.postMessage is not an option)
 * you want to abstract all memory synchronization issues and related out from your main application.
 * you are ok with eventual consistency (for example game loop interval is different from visible frame rate)
 
 #### Why?
+
 * There is no other way to my knowledge to populate workers with big amount of data that changes often.
-* It gives protection against shared memory issues in rather simple way. 
-* All writes and reads happen in bulk while keeping the lock. 
+* It gives protection against shared memory issues in rather simple way.
+* All writes and reads happen in bulk while keeping the lock.
 * This way every minor updates to the data does not have to deal with locking.
 
 #### Install
+
 ```
 npm install shared-objects
 ```
 
 #### General algorithm
+
 MASTER
+
 1) On your tick make your calculations and add dirty objects to MASTER
 2) master.flushToMemory()
-     - lock memory
-     - update shared array buffers
-     - unlock
+    - lock memory
+    - update shared array buffers
+    - unlock
 3) back to beginning
 
 SLAVE
+
 1) const changes = slave.sync() for example called in requestAnimationFrame handler.
-     - lock memory
-     - update local objects
-     - unlock
+    - lock memory
+    - update local objects
+    - unlock
 2) update OffscreenCanvas based on changes.
 3) back to beginning
 
 #### Anything else?
+
 Complexity of change detection is O(no_of_objects_changed).
 
-Its fast enough for ~50 fps with 100k objects that change every tick/frame. 
+Its fast enough for ~50 fps with 100k objects that change every tick/frame.
 (Depends on the CPU and million other things of course, but to just give you ball park figure.)
 
 ## Example of use case
+
 ```
 // IN Main thread
 const main = new ExampleMasterObjectArray(5);
@@ -75,6 +82,7 @@ f();
 ```
 
 ## Example of definition
+
 ```
 export class ExampleMasterObjectArray extends StateBufferForMaster<MasterObject> {
 
@@ -112,15 +120,28 @@ export class ExampleSlaveObjectArray extends StateBufferForSlave<SlaveObject> {
         return obj.metaId === this.view8[index * this.size8];
     }
 
-    protected updateObject(index: number, obj: SlaveObject | undefined): SlaveObject | undefined {
+    protected onNew(index: number): SlaveObject {
         const p8 = index * this.size8;
         const p32 = index * this.size32;
-        obj.metaId = this.view8[p8];
+        return {
+            metaId: this.view8[p8],
+            x: this.view8[p8 + 1],
+            y: this.view8[p8 + 2],
+            sx: this.view32[p32 + 1],
+            sy: this.view32[p32 + 2]
+        }
+    }
+    
+    protected onUpdate(index: number, obj: SlaveObject): void {
+        const p8 = index * this.size8;
+        const p32 = index * this.size32;
         obj.x = this.view8[p8 + 1];
         obj.y = this.view8[p8 + 2];
         obj.sx = this.view32[p32 + 1];
         obj.sy = this.view32[p32 + 2];
-        return obj;
+    }
+    
+    protected onDelete(index: number, obj: SlaveObject): void {
     }
 }
 
@@ -134,7 +155,9 @@ export interface SlaveObject {
 ```
 
 ## Warnings
+
 It uses SharedArrayBuffer and Atomics. Make sure your target browsers support those!
 
 ## License
+
 MIT - Do what ever you want with it. If you found it useful, let me know :)
