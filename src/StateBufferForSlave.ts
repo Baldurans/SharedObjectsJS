@@ -28,11 +28,12 @@ export abstract class StateBufferForSlave<T> extends StateBuffer {
             hadChanges = true;
             const noOfObjects = this.controlBufferView[StateBufferForSlave.NO_OF_OBJECTS_INDEX];
             for (let objIndex = 0; objIndex < noOfObjects; objIndex++) {
-                const newObj = this.onNew(objIndex);
-                this.objects[objIndex] = newObj;
-                this.objectsSet.add(newObj);
-                this.onUpdate(objIndex, newObj);
-
+                if (this.exists(objIndex)) {
+                    const newObj = this.onNew(objIndex);
+                    this.objects[objIndex] = newObj;
+                    this.objectsSet.add(newObj);
+                    this.onUpdate(objIndex, newObj);
+                }
                 this.isDirtyBufferView[objIndex] = StateBuffer.CLEAN;
                 this.changesBufferView[objIndex] = 0;
             }
